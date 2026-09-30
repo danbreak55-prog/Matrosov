@@ -69,9 +69,23 @@ function App() {
     setMenuOpen(false);
   };
 
-  const submit = (e: FormEvent<HTMLFormElement>) => {
+  const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSubmitted(true);
+    const form = e.currentTarget;
+    const data = Object.fromEntries(new FormData(form).entries());
+
+    try {
+      const response = await fetch('/api/send-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Request failed');
+      setSubmitted(true);
+      form.reset();
+    } catch {
+      window.alert('We could not send your request right now. Please try again shortly.');
+    }
   };
 
   return (
@@ -404,9 +418,8 @@ function App() {
                 <CheckCircle2 size={42} />
                 <h2>Request received</h2>
                 <p>
-                  Your details have been captured in this demo form. For the
-                  real business workflow, connect this form to the company's
-                  email, CRM or WhatsApp number.
+                  Your inspection request has been sent successfully. The
+                  Matrosov team can now review your details and contact you.
                 </p>
                 <button
                   className="primary"
@@ -439,6 +452,15 @@ function App() {
                       name="phone"
                       inputMode="tel"
                       placeholder="+971 ..."
+                    />
+                  </label>
+                  <label>
+                    Email
+                    <input
+                      required
+                      type="email"
+                      name="email"
+                      placeholder="your@email.com"
                     />
                   </label>
                   <label>
