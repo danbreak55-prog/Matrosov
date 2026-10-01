@@ -1,86 +1,54 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import {
-  ArrowRight,
-  CheckCircle2,
-  ChevronDown,
-  Droplets,
-  Flame,
-  Home,
-  Menu,
-  ShieldCheck,
-  Snowflake,
-  X,
-  Zap,
+  ArrowRight, CheckCircle2, ChevronDown, Droplets, Flame, Home,
+  Menu, ShieldCheck, Snowflake, X, Zap, Play
 } from 'lucide-react';
 
-const services = [
-  {
-    icon: Droplets,
-    title: 'Waterproofing',
-    text: 'Protect your roof from leaks, rainwater and long-term moisture damage.',
-    tag: 'Leak protection',
-  },
-  {
-    icon: Snowflake,
-    title: 'Cool Roof',
-    text: 'Reflective roof protection designed for intense UAE heat and sun exposure.',
-    tag: 'Heat protection',
-  },
-  {
-    icon: Home,
-    title: 'Roof Repairs',
-    text: 'Professional repair work for worn surfaces, cracks, drainage issues and roof defects.',
-    tag: 'Repair & restore',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Roof Protection',
-    text: 'Durable systems that help extend roof life and protect your property year-round.',
-    tag: 'Long-term care',
-  },
+type Service = {
+  id: string;
+  icon: typeof Droplets;
+  title: string;
+  kicker: string;
+  text: string;
+  detail: string;
+};
+
+const services: Service[] = [
+  { id: 'leaks', icon: Droplets, title: 'Roof Leaks', kicker: 'STOP WATER DAMAGE', text: 'Find the weak points and protect your roof from leaks and moisture.', detail: 'Leak-focused inspection, surface preparation and waterproofing suited to the roof condition.' },
+  { id: 'heat', icon: Snowflake, title: 'Roof Heat', kicker: 'BEAT UAE HEAT', text: 'Protect the roof surface from intense sun and heat exposure.', detail: 'Cool-roof protection designed to reflect heat from exposed roof surfaces.' },
+  { id: 'waterproofing', icon: ShieldCheck, title: 'Waterproofing', kicker: 'LONG-TERM PROTECTION', text: 'Build a reliable barrier against rain, moisture and weather.', detail: 'Waterproofing solutions for villas, balconies, warehouses and other roof areas.' },
+  { id: 'repair', icon: Home, title: 'Roof Repair', kicker: 'RESTORE THE SURFACE', text: 'Deal with cracks, worn areas, drainage problems and roof defects.', detail: 'The roof is assessed first so the repair approach matches the actual problem.' },
+  { id: 'commercial', icon: Flame, title: 'Commercial Roof', kicker: 'LARGE ROOF AREAS', text: 'Protection and waterproofing for warehouses and commercial properties.', detail: 'Site-specific roof inspection and a practical protection plan for larger properties.' },
 ];
 
-const projects = [
-  {
-    place: 'DUBAI VILLA',
-    type: 'Flat Roof Waterproofing',
-    detail: 'Real before-and-after roof work showing surface preparation and the waterproofing finish.',
-    beforeImage: 'https://www.coolroofuae.com/photos/owner-work/site-phase-4/dubai-villa-cool-roof-finished-surface-after.jpg',
-    afterImage: 'https://www.coolroofuae.com/photos/owner-work/site-phase-4/dubai-villa-white-roof-coating-ac-units-after.jpg',
-    badge: 'BEFORE → AFTER',
-  },
-  {
-    place: 'DAMAC HILLS · DUBAI',
-    type: 'Roof Surface Restoration',
-    detail: 'Real project photography showing the roof before treatment and the applied PU waterproofing system.',
-    beforeImage: 'https://www.coolroofuae.com/photos/owner-work/site-phase-4/roof-parapet-drain-waterproofing-detail.jpg',
-    afterImage: 'https://www.coolroofuae.com/photos/owner-work/site-phase-4/villa-roof-edge-waterproofing-after.jpg',
-    badge: 'BEFORE → AFTER',
-  },
+const videos = [
+  { title: 'Roof work in action', src: 'https://matrosov.ae/' },
 ];
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [selected, setSelected] = useState<Service | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  const go = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-    setMenuOpen(false);
+  const service = useMemo(() => selected ?? services[0], [selected]);
+
+  const choose = (item: Service) => {
+    setSelected(item);
+    setSubmitted(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const data = Object.fromEntries(new FormData(form).entries());
-
     try {
       const response = await fetch('/api/send-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error('Request failed');
+      if (!response.ok) throw new Error();
       setSubmitted(true);
       form.reset();
     } catch {
@@ -88,407 +56,207 @@ function App() {
     }
   };
 
+  const goHome = () => {
+    setSelected(null);
+    setMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="site">
       <header className="nav">
         <div className="nav-inner">
-          <button
-            className="brand"
-            onClick={() => go('top')}
-            aria-label="Go to homepage"
-          >
+          <button className="brand" onClick={goHome} aria-label="Matrosov home">
             <span className="brand-mark">M</span>
-            <span>
-              <strong>MATROSOV</strong>
-              <small>COOL ROOF UAE</small>
-            </span>
+            <span><strong>MATROSOV</strong><small>COOL ROOF UAE</small></span>
           </button>
           <nav className={menuOpen ? 'nav-links open' : 'nav-links'}>
-            <button onClick={() => go('services')}>Services</button>
-            <button onClick={() => go('projects')}>Projects</button>
-            <button onClick={() => go('about')}>Why us</button>
-            <button onClick={() => go('faq')}>FAQ</button>
-            <button className="nav-cta" onClick={() => setModalOpen(true)}>
-              Free Inspection <ArrowRight size={16} />
-            </button>
+            <button onClick={goHome}>Home</button>
+            <button onClick={() => document.getElementById('solutions')?.scrollIntoView({behavior:'smooth'})}>Solutions</button>
+            <button onClick={() => document.getElementById('process')?.scrollIntoView({behavior:'smooth'})}>How it works</button>
+            <button onClick={() => document.getElementById('faq')?.scrollIntoView({behavior:'smooth'})}>FAQ</button>
           </nav>
-          <button
-            className="menu"
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Open menu"
-          >
-            {menuOpen ? <X /> : <Menu />}
-          </button>
+          <button className="menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Open menu">{menuOpen ? <X /> : <Menu />}</button>
         </div>
       </header>
 
-      <main id="top">
-        <section className="hero">
-          <div className="hero-glow" />
-          <div className="container hero-grid">
-            <div className="hero-copy">
-              <div className="eyebrow">
-                <span /> ROOFING EXPERTS · UAE
-              </div>
-              <h1>
-                Keep your roof <em>cool, dry</em> & protected.
-              </h1>
-              <p className="hero-text">
-                Professional roof repairs, waterproofing and cool-roof
-                protection for homes and properties across the UAE.
-              </p>
-              <div className="hero-actions">
-                <button className="primary" onClick={() => setModalOpen(true)}>
-                  Request Free Inspection <ArrowRight size={18} />
-                </button>
-                <button className="secondary" onClick={() => go('projects')}>
-                  See our work
-                </button>
-              </div>
-              <div className="trust-row">
-                <div>
-                  <strong>1000+</strong>
-                  <span>Projects</span>
-                </div>
-                <div>
-                  <strong>25Y</strong>
-                  <span>Warranty*</span>
-                </div>
-                <div>
-                  <strong>UAE</strong>
-                  <span>Service</span>
-                </div>
+      {!selected ? (
+        <main>
+          <section className="landing-hero">
+            <div className="hero-media">
+              <div className="media-overlay" />
+              <div className="media-badge"><Play size={14} /> ROOFING WORK · UAE</div>
+            </div>
+            <div className="container landing-content">
+              <div className="eyebrow light"><span /> MATROSOV COOL ROOF · UAE</div>
+              <h1>Your roof has a problem.<br /><em>Start here.</em></h1>
+              <p>Roof repair, waterproofing and heat protection built around what your property actually needs.</p>
+              <div className="intro-line">
+                <span>1</span><b>Tell us what you're dealing with</b>
+                <ArrowRight />
+                <span>2</span><b>See the right solution</b>
+                <ArrowRight />
+                <span>3</span><b>Request an inspection</b>
               </div>
             </div>
-            <div
-              className="roof-visual"
-              aria-label="Stylized cool roof illustration"
-            >
-              <div className="sun">
-                <Zap size={24} />
-              </div>
-              <div className="roof-card">
-                <div className="roof-top">
-                  <span>COOL ROOF</span>
-                  <span>UAE</span>
-                </div>
-                <div className="roof-surface">
-                  <div className="roof-unit unit-a" />
-                  <div className="roof-unit unit-b" />
-                  <div className="roof-line line-a" />
-                  <div className="roof-line line-b" />
-                </div>
-                <div className="roof-label">
-                  <Snowflake size={18} />
-                  <span>HEAT REFLECTIVE PROTECTION</span>
-                </div>
-              </div>
-              <div className="temp-card">
-                <span>ROOF SURFACE</span>
-                <strong>COOLER</strong>
-                <small>Reflective protection</small>
-              </div>
-            </div>
-          </div>
-        </section>
+          </section>
 
-        <section className="proof-strip">
-          <div className="container proof-grid">
-            <div>
-              <CheckCircle2 /> Free inspection
+          <section id="solutions" className="choose-section">
+            <div className="container">
+              <div className="section-kicker">WHAT BRINGS YOU HERE?</div>
+              <div className="choose-head">
+                <h2>Choose your roof problem.</h2>
+                <p>No complicated menu. Pick the issue you want to solve and we’ll take you to the relevant information.</p>
+              </div>
+              <div className="choice-grid">
+                {services.map((item, index) => {
+                  const Icon = item.icon;
+                  return (
+                    <button className={index === 0 ? 'choice-card featured' : 'choice-card'} key={item.id} onClick={() => choose(item)}>
+                      <div className="choice-number">0{index + 1}</div>
+                      <div className="choice-icon"><Icon /></div>
+                      <span>{item.kicker}</span>
+                      <h3>{item.title}</h3>
+                      <p>{item.text}</p>
+                      <strong>Explore solution <ArrowRight size={17} /></strong>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div>
-              <CheckCircle2 /> Leak protection
-            </div>
-            <div>
-              <CheckCircle2 /> Heat protection
-            </div>
-            <div>
-              <CheckCircle2 /> Professional workmanship
-            </div>
-          </div>
-        </section>
+          </section>
 
-        <section id="services" className="section">
-          <div className="container">
-            <div className="section-head">
+          <section id="process" className="process-section">
+            <div className="container process-grid">
               <div>
-                <div className="eyebrow">
-                  <span /> WHAT WE DO
-                </div>
-                <h2>Roof protection that works in the UAE climate.</h2>
+                <div className="section-kicker light">A DIFFERENT WAY TO START</div>
+                <h2>Less guessing.<br /><em>More clarity.</em></h2>
               </div>
-              <p>
-                From leaks to extreme heat, our services focus on practical
-                protection for your roof and property.
-              </p>
+              <div className="steps">
+                {[
+                  ['01','Choose the issue','Tell us what you’re seeing on the roof.'],
+                  ['02','Understand the fix','See the relevant work, materials and process.'],
+                  ['03','Request inspection','Send the details so the team can assess the property.'],
+                ].map(([n,t,d]) => <div className="step" key={n}><span>{n}</span><div><h3>{t}</h3><p>{d}</p></div></div>)}
+              </div>
             </div>
-            <div className="service-grid">
-              {services.map(({ icon: Icon, title, text, tag }) => (
-                <article className="service-card" key={title}>
-                  <div className="icon">
-                    <Icon size={23} />
-                  </div>
-                  <span>{tag}</span>
-                  <h3>{title}</h3>
-                  <p>{text}</p>
-                  <button onClick={() => setModalOpen(true)}>
-                    Get a quote <ArrowRight size={15} />
-                  </button>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
+          </section>
 
-        <section id="projects" className="section projects">
-          <div className="container">
-            <div className="section-head">
-              <div>
-                <div className="eyebrow">
-                  <span /> RECENT WORK
-                </div>
-                <h2>Real roof work. Clear results.</h2>
-              </div>
-              <p>
-                See the difference clearly: every card now shows a real BEFORE image beside a real AFTER image. These are representative reference photos, not claimed as Matrosov projects.
-              </p>
+          <section className="trust-section">
+            <div className="container trust-row-new">
+              <div><strong>ROOF REPAIRS</strong><span>Practical solutions for damaged surfaces</span></div>
+              <div><strong>WATERPROOFING</strong><span>Protection against moisture and leaks</span></div>
+              <div><strong>COOL ROOF</strong><span>Protection for intense UAE heat</span></div>
+              <div><strong>UAE</strong><span>Roofing-focused service</span></div>
             </div>
-            <div className="project-grid">
-              {projects.map(p => (
-                <article className="project-card" key={p.place + p.type}>
-                  <div className="before-after">
-                    <div className="compare-panel">
-                      <img src={p.beforeImage} alt={p.type + ' before work'} loading="lazy" />
-                      <span>BEFORE</span>
-                    </div>
-                    <div className="compare-panel">
-                      <img src={p.afterImage} alt={p.type + ' after work'} loading="lazy" />
-                      <span>AFTER</span>
-                    </div>
-                  </div>
-                  <div className="project-info">
-                    <span>📍 {p.place}</span>
-                    <h3>{p.type}</h3>
-                    <p>{p.detail}</p>
-                  </div>
-                </article>
-              ))}
+          </section>
+        </main>
+      ) : (
+        <main className="solution-page">
+          <section className="solution-hero">
+            <div className="container">
+              <button className="back" onClick={goHome}>← Back to roof problems</button>
+              <div className="solution-label"><service.icon /><span>{service.kicker}</span></div>
+              <h1>{service.title}<br /><em>handled properly.</em></h1>
+              <p>{service.text}</p>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section id="about" className="section dark">
-          <div className="container about-grid">
-            <div>
-              <div className="eyebrow light">
-                <span /> WHY MATROSOV
-              </div>
-              <h2>Built for sun, rain and real UAE rooftops.</h2>
-              <p>
-                Roof problems become expensive when they are ignored. We focus
-                on identifying the issue, preparing the surface properly and
-                applying the right protection system for the job.
-              </p>
-              <button className="primary" onClick={() => setModalOpen(true)}>
-                Book an inspection <ArrowRight size={18} />
-              </button>
-            </div>
-            <div className="feature-list">
+          <section className="solution-intro">
+            <div className="container solution-intro-grid">
               <div>
-                <ShieldCheck />
-                <div>
-                  <strong>Protection first</strong>
-                  <span>
-                    Solutions focused on waterproofing and heat exposure.
-                  </span>
-                </div>
+                <div className="section-kicker">THE RIGHT START</div>
+                <h2>Inspect first.<br />Then choose the system.</h2>
               </div>
               <div>
-                <Snowflake />
-                <div>
-                  <strong>Cool-roof systems</strong>
-                  <span>
-                    Designed to reflect heat and help keep roof surfaces cooler.
-                  </span>
+                <p>{service.detail}</p>
+                <div className="mini-points">
+                  <span><CheckCircle2 /> Roof condition checked</span>
+                  <span><CheckCircle2 /> Surface prepared for the work</span>
+                  <span><CheckCircle2 /> Scope explained before work</span>
                 </div>
               </div>
+            </div>
+          </section>
+
+          <section className="video-section">
+            <div className="container">
+              <div className="video-heading">
+                <div><div className="section-kicker">FROM THE COMPANY'S WORK</div><h2>See roofing work up close.</h2></div>
+                <p>Publicly available company material can be used here as the visual proof section; the surrounding design is original to this site.</p>
+              </div>
+              <div className="video-frame">
+                <div className="video-placeholder">
+                  <div className="play-ring"><Play fill="currentColor" /></div>
+                  <strong>MATROSOV ROOFING WORK</strong>
+                  <span>Video area ready for the owner's original website video</span>
+                  <a href="https://matrosov.ae/krovlya-en" target="_blank" rel="noreferrer">Open original roofing page <ArrowRight size={15}/></a>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="work-section">
+            <div className="container">
+              <div className="section-kicker">THE WORKFLOW</div>
+              <h2>A roof job is more than a coating.</h2>
+              <div className="work-grid">
+                {[
+                  ['01','Inspection','Understand the roof condition and identify vulnerable areas.'],
+                  ['02','Preparation','Clean and prepare the surface before the protection system is applied.'],
+                  ['03','Installation','Apply the selected waterproofing or protection system correctly.'],
+                  ['04','Check','Review the finished work and the areas that needed attention.'],
+                ].map(([n,t,d]) => <article key={n}><span>{n}</span><h3>{t}</h3><p>{d}</p></article>)}
+              </div>
+            </div>
+          </section>
+
+          <section className="request-section">
+            <div className="container request-grid">
               <div>
-                <Droplets />
-                <div>
-                  <strong>Leak prevention</strong>
-                  <span>
-                    Targeted roof repair and waterproofing for vulnerable areas.
-                  </span>
-                </div>
+                <div className="section-kicker light">READY WHEN YOU ARE</div>
+                <h2>Tell us about<br /><em>your roof.</em></h2>
+                <p>Your request will be sent to the temporary project email for now. The recipient can be changed later.</p>
+              </div>
+              <div className="request-card">
+                {submitted ? (
+                  <div className="success"><CheckCircle2 size={42}/><h2>Request received</h2><p>Your inspection request has been sent successfully.</p><button className="primary" onClick={() => setSubmitted(false)}>Send another</button></div>
+                ) : (
+                  <form onSubmit={submit}>
+                    <input type="hidden" name="service" value={service.title} />
+                    <label>Name<input required name="name" placeholder="Your name" /></label>
+                    <label>Phone<input required name="phone" inputMode="tel" placeholder="+971 ..." /></label>
+                    <label>Email<input required type="email" name="email" placeholder="your@email.com" /></label>
+                    <label>Area in UAE<input required name="area" placeholder="Dubai, Abu Dhabi..." /></label>
+                    <label>What do you need?<select name="request_type" defaultValue={service.title}><option>{service.title}</option><option>General inspection</option><option>Not sure</option></select></label>
+                    <button className="primary full" type="submit">Request inspection <ArrowRight size={18}/></button>
+                  </form>
+                )}
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section id="faq" className="section faq">
-          <div className="container narrow">
-            <div className="eyebrow">
-              <span /> FAQ
+          <section id="faq" className="faq-section">
+            <div className="container narrow">
+              <div className="section-kicker">FAQ</div>
+              <h2>Before you request an inspection.</h2>
+              {[
+                ['Can the roof be inspected if it is already damaged?','Yes. The condition of the roof should be assessed first so damaged areas can be addressed as part of the work plan.'],
+                ['Do you work on villas and commercial roofs?','The company’s roofing page lists villas, balconies, warehouses and commercial premises among its roofing services.'],
+                ['How long can waterproofing take?','The company’s current roofing page says timing depends on roof area and condition and gives a typical range of 1–5 days.'],
+              ].map(([q,a]) => <details key={q}><summary>{q}<ChevronDown/></summary><p>{a}</p></details>)}
             </div>
-            <h2>Questions before you book?</h2>
-            <details>
-              <summary>
-                Do you offer a free inspection? <ChevronDown />
-              </summary>
-              <p>
-                Yes. Use the request form and provide your location and roof
-                issue. The team can follow up with the next steps.
-              </p>
-            </details>
-            <details>
-              <summary>
-                What problems can you inspect? <ChevronDown />
-              </summary>
-              <p>
-                Common requests include roof leaks, waterproofing, heat
-                protection, surface deterioration and general roof repairs.
-              </p>
-            </details>
-            <details>
-              <summary>
-                Do you cover the UAE? <ChevronDown />
-              </summary>
-              <p>
-                The profile provided is UAE-focused. Coverage for your exact
-                area should be confirmed when requesting an inspection.
-              </p>
-            </details>
-          </div>
-        </section>
-
-        <section className="cta">
-          <div className="container cta-inner">
-            <div>
-              <div className="eyebrow light">
-                <span /> READY TO PROTECT YOUR ROOF?
-              </div>
-              <h2>Stop small roof problems becoming big ones.</h2>
-            </div>
-            <button className="light-btn" onClick={() => setModalOpen(true)}>
-              Request Free Inspection <ArrowRight size={18} />
-            </button>
-          </div>
-        </section>
-      </main>
+          </section>
+        </main>
+      )}
 
       <footer>
-        <div className="container footer-grid">
-          <div>
-            <div className="brand footer-brand">
-              <span className="brand-mark">M</span>
-              <span>
-                <strong>MATROSOV</strong>
-                <small>COOL ROOF UAE</small>
-              </span>
-            </div>
-            <p>Roof repairs · Waterproofing · Rain & sun protection · UAE</p>
-          </div>
-          <div className="footer-links">
-            <button onClick={() => go('services')}>Services</button>
-            <button onClick={() => go('projects')}>Projects</button>
-            <button onClick={() => go('faq')}>FAQ</button>
-            <a href="https://matrosov.ae" target="_blank" rel="noreferrer">
-              matrosov.ae
-            </a>
-          </div>
+        <div className="container footer-new">
+          <div className="brand"><span className="brand-mark">M</span><span><strong>MATROSOV</strong><small>COOL ROOF UAE</small></span></div>
+          <div><span>Roof Repairs · Waterproofing · Heat Protection</span><a href="https://matrosov.ae" target="_blank" rel="noreferrer">matrosov.ae</a></div>
         </div>
-        <div className="container copyright">
-          © 2026 Matrosov Cool Roof UAE · *Warranty terms should be confirmed
-          with the business.
-        </div>
+        <div className="container copyright">© 2026 Matrosov Cool Roof UAE · Warranty terms should be confirmed with the business.</div>
       </footer>
-
-      {modalOpen && (
-        <div
-          className="modal-backdrop"
-          onMouseDown={e => e.currentTarget === e.target && setModalOpen(false)}
-        >
-          <div className="modal">
-            <button className="close" onClick={() => setModalOpen(false)}>
-              <X />
-            </button>
-            {submitted ? (
-              <div className="success">
-                <CheckCircle2 size={42} />
-                <h2>Request received</h2>
-                <p>
-                  Your inspection request has been sent successfully. The
-                  Matrosov team can now review your details and contact you.
-                </p>
-                <button
-                  className="primary"
-                  onClick={() => {
-                    setSubmitted(false);
-                    setModalOpen(false);
-                  }}
-                >
-                  Done
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="eyebrow">
-                  <span /> FREE INSPECTION
-                </div>
-                <h2>Tell us about your roof.</h2>
-                <p className="modal-copy">
-                  Share a few details and the team can review your request.
-                </p>
-                <form onSubmit={submit}>
-                  <label>
-                    Name
-                    <input required name="name" placeholder="Your name" />
-                  </label>
-                  <label>
-                    Phone
-                    <input
-                      required
-                      name="phone"
-                      inputMode="tel"
-                      placeholder="+971 ..."
-                    />
-                  </label>
-                  <label>
-                    Email
-                    <input
-                      required
-                      type="email"
-                      name="email"
-                      placeholder="your@email.com"
-                    />
-                  </label>
-                  <label>
-                    Area in UAE
-                    <input
-                      required
-                      name="area"
-                      placeholder="Dubai, Abu Dhabi..."
-                    />
-                  </label>
-                  <label>
-                    What do you need?
-                    <select name="service" defaultValue="Waterproofing">
-                      <option>Waterproofing</option>
-                      <option>Cool Roof</option>
-                      <option>Roof Repair</option>
-                      <option>Not sure — need inspection</option>
-                    </select>
-                  </label>
-                  <button className="primary full" type="submit">
-                    Send Request <ArrowRight size={18} />
-                  </button>
-                </form>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
